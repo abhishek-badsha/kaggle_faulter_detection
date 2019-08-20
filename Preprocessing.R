@@ -68,3 +68,8 @@ master_data[,(fac_cols):= lapply(.SD, as.factor), .SDcols = fac_cols]
 train[,(fac_cols):= lapply(.SD, as.factor), .SDcols = fac_cols]
 
 str(master_data)
+
+
+### save files ###
+
+save(train,test,master_data,file = "processed_data.rda")

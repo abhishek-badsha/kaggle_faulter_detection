@@ -1,20 +1,19 @@
 pakInstall(c("xgboost","Matrix","rBayesianOptimization","caret"))
+load("processed_data.rda")
 
 master_data$ID <- NULL
 master_data$TransactionID <- NULL
 master_data$DeviceInfo <- NULL
 dummy_for <- dummyVars(" ~ .",data = master_data)
+rm(master_data)
+gc()
 
 train$ID <- NULL
 train$TransactionID <- NULL
 train$DeviceInfo <- NULL
 train_mat <-data.frame(predict(dummy_for, newdata = train))
-
-test$ID <- NULL
-test$TransactionID <- NULL
-test$DeviceInfo <- NULL
-#test_mat <- dummyVars(" ~ .",data = test)
-test_mat <-data.frame(predict(dummy_for, newdata = test))
+rm(train)
+gc()
 
 # train_mat <- dummyVars(" ~ .",data = Filter(is.factor, train))
 # train_mat <-data.frame(predict(train_mat, newdata = Filter(is.factor, train)))
@@ -23,8 +22,13 @@ test_mat <-data.frame(predict(dummy_for, newdata = test))
 
 dtrain <- xgb.DMatrix(as.matrix(train_mat[,-1]),
                       label = train_mat$isFraud)
-cv_folds <- KFold(train_mat$isFraud, nfolds = 10,
+
+cv_folds <- KFold(train_mat$isFraud, nfolds = 5,
                   stratified = TRUE, seed = 0)
+rm(train_mat)
+gc()
+saveRDS(dtrain,"dtrain.rds")
+
 xgb_cv_bayes <- function(eta,max_depth, min_child_weight, subsample,colsample_bytree,alpha,lambda) {
   cv <- xgb.cv(params = list(booster = "gbtree", eta = eta,
                              max_depth = max_depth,
@@ -61,6 +65,13 @@ xgbmpdel <- xgboost(data = dtrain,params = list(booster = "gbtree", eta = 0.01,
                                     lambda = 1, alpha = 0,
                                     objective = "binary:logistic",
                                     eval_metric = "auc"),nrounds = 100,early_stopping_rounds = 5,maximize = T)
+
+
+test$ID <- NULL
+test$TransactionID <- NULL
+test$DeviceInfo <- NULL
+#test_mat <- dummyVars(" ~ .",data = test)
+test_mat <-data.frame(predict(dummy_for, newdata = test))
 
 
 test_mat$isFraudFALSE <- NULL
