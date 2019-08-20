@@ -23,27 +23,31 @@ test_mat <-data.frame(predict(dummy_for, newdata = test))
 
 dtrain <- xgb.DMatrix(as.matrix(train_mat[,-1]),
                       label = train_mat$isFraud)
-cv_folds <- KFold(train_mat$isFraud, nfolds = 5,
+cv_folds <- KFold(train_mat$isFraud, nfolds = 10,
                   stratified = TRUE, seed = 0)
-xgb_cv_bayes <- function(max_depth, min_child_weight, subsample) {
-  cv <- xgb.cv(params = list(booster = "gbtree", eta = 0.01,
+xgb_cv_bayes <- function(eta,max_depth, min_child_weight, subsample,colsample_bytree,alpha,lambda) {
+  cv <- xgb.cv(params = list(booster = "gbtree", eta = eta,
                              max_depth = max_depth,
                              min_child_weight = min_child_weight,
-                             subsample = subsample, colsample_bytree = 0.3,
-                             lambda = 1, alpha = 0,
+                             subsample = subsample, colsample_bytree = colsample_bytree,
+                             lambda = lambda, alpha = alpha,
                              objective = "binary:logistic",
                              eval_metric = "auc"),
                data = dtrain, nround = 100,
                folds = cv_folds, prediction = TRUE, showsd = TRUE,
-               early_stopping_rounds = 5, maximize = TRUE, verbose = 0)
+               early_stopping_rounds = 15, maximize = TRUE, verbose = 0)
   list(Score = cv$evaluation_log$test_auc_mean[cv$best_iteration],
        Pred = cv$pred)
 }
 OPT_Res <- BayesianOptimization(xgb_cv_bayes,
-                                bounds = list(max_depth = c(2L, 6L),
+                                bounds = list(eta = c(1e-09,1),
+                                              max_depth = c(2L, 10L),
                                               min_child_weight = c(1L, 10L),
-                                              subsample = c(0.5, 0.8)),
-                                init_grid_dt = NULL, init_points = 10, n_iter = 20,
+                                              subsample = c(0, 1),
+                                              colsample_bytree = c(0,1),
+                                              alpha = c(0,1),
+                                              lambda = c(0,1)),
+                                init_grid_dt = NULL, init_points = 20, n_iter = 50,
                                 acq = "ucb", kappa = 2.576, eps = 0.0,
                                 verbose = TRUE)
 
