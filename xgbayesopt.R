@@ -1,8 +1,5 @@
-library(xgboost)
-library(Matrix)
-library(rBayesianOptimization)
+pakInstall(c("xgboost","Matrix","rBayesianOptimization","caret"))
 
-library(caret)
 master_data$ID <- NULL
 master_data$TransactionID <- NULL
 master_data$DeviceInfo <- NULL

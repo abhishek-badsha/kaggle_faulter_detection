@@ -1,5 +1,5 @@
-library(data.table)
-library(ggplot2)
+source("functions.R")
+pakInstall(c("data.table","ggplot2","zoo"))
 
 ### Read Data ###
 files <- dir(pattern = ".csv")
